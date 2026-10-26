@@ -12,7 +12,7 @@ import time
 
 import cv2
 import numpy as np
-from PySide6.QtCore import QThread, Qt, Signal
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -32,6 +32,8 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -231,164 +233,224 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         self.setStyleSheet("""
+            /* ========== 全局基底 ========== */
             QMainWindow {
-                background: #07111f;
+                background: #060e18;
             }
             QWidget#bg_root {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                            stop:0 #08111f, stop:0.45 #0b1d2f,
-                                            stop:1 #111827);
+                                            stop:0 #060e1a, stop:0.3 #091a2c,
+                                            stop:0.7 #0c1f35, stop:1 #0b1728);
             }
             QWidget {
                 background: transparent;
-                color: #e5edf7;
+                color: #e2edf9;
                 font-family: "Microsoft YaHei UI", "Segoe UI";
             }
+
+            /* ========== 顶部标题栏 ========== */
             QFrame#header_bar {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #0d2537, stop:0.55 #15344a,
-                                            stop:1 #172033);
-                border: 1px solid #2d6f8f;
-                border-radius: 10px;
-            }
-            QFrame#main_card, QFrame#panel_card {
-                background: rgba(13, 27, 42, 235);
-                border: 1px solid #2d536a;
-                border-radius: 10px;
-            }
-            QGroupBox {
-                font-weight: 700;
-                font-size: 13px;
-                border: 1px solid #315d73;
-                border-radius: 8px;
-                margin-top: 11px;
-                padding: 15px 8px 8px 8px;
-                background: rgba(17, 34, 50, 210);
-                color: #dbeafe;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 7px;
-                color: #a7d8f5;
-                background: #112232;
-            }
-            QLabel {
-                background: transparent;
-                border: none;
-                color: #dbeafe;
-                font-size: 13px;
-            }
-            QLabel#image_panel {
-                background: #060b12;
-                border: 1px solid #3d6f85;
-                border-radius: 8px;
-                color: #93a8bb;
-                font-size: 16px;
+                                            stop:0 #082030, stop:0.25 #0f3148,
+                                            stop:0.5 #13405a, stop:0.75 #0f3148,
+                                            stop:1 #081e2e);
+                border: 1px solid #2e7a9e;
+                border-radius: 12px;
             }
             QLabel#title_label {
-                color: #f8fbff;
-                font-size: 36px;
+                color: #f0f8ff;
+                font-size: 38px;
                 font-weight: 900;
             }
             QLabel#subtitle_label {
-                color: #9ccfe8;
+                color: #87ceeb;
                 font-size: 13px;
+                letter-spacing: 1px;
+            }
+
+            /* ========== 卡片面板 ========== */
+            QFrame#main_card {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                            stop:0 rgba(10,24,40,240), stop:1 rgba(14,30,48,235));
+                border: 1px solid #2a5c78;
+                border-radius: 12px;
+            }
+            QFrame#panel_card {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 rgba(12,26,42,242), stop:1 rgba(8,20,32,238));
+                border: 1px solid #2a5570;
+                border-radius: 12px;
+            }
+
+            /* ========== 分组框 ========== */
+            QGroupBox {
+                font-weight: 700;
+                font-size: 13px;
+                border: 1px solid #2a5f7a;
+                border-radius: 10px;
+                margin-top: 13px;
+                padding: 16px 10px 10px 10px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 rgba(14,32,48,220), stop:1 rgba(10,22,34,210));
+                color: #d0e8ff;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 2px 10px;
+                color: #b8e2ff;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #13374d, stop:1 #1a4a62);
+                border: 1px solid #2a7090;
+                border-radius: 5px;
+            }
+
+            /* ========== 标签 ========== */
+            QLabel {
+                background: transparent;
+                border: none;
+                color: #d0e5f8;
+                font-size: 13px;
+            }
+            QLabel#image_panel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #040a12, stop:1 #071019);
+                border: 2px solid #2d6078;
+                border-radius: 10px;
+                color: #7a9db5;
+                font-size: 17px;
             }
             QLabel#status_label {
-                background: #0b1724;
-                border: 1px solid #38667a;
-                color: #e7f4ff;
-                padding: 9px;
-                border-radius: 7px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #0a1a2a, stop:1 #0e2236);
+                border: 1px solid #2a6d8a;
+                color: #e0f0ff;
+                padding: 10px;
+                border-radius: 8px;
+                font-size: 13px;
             }
+
+            /* ========== 按钮 - 主按钮渐变 ========== */
             QPushButton {
-                background: #1f6f8b;
-                color: #f8fbff;
-                border: 1px solid #55a3bd;
-                padding: 6px 12px;
-                border-radius: 7px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #1f7896, stop:0.5 #1a6882, stop:1 #155a72);
+                color: #f4fbff;
+                border: 1px solid #4da5c4;
+                padding: 7px 14px;
+                border-radius: 8px;
                 font-size: 13px;
                 font-weight: 700;
-                min-height: 26px;
+                min-height: 28px;
             }
             QPushButton:hover {
-                background: #2985a8;
-                border-color: #84d4ee;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #2a8fb0, stop:0.5 #2280a0, stop:1 #1a6e8c);
+                border-color: #7ad4f0;
             }
             QPushButton:pressed {
-                background: #185871;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #155a72, stop:1 #1a6882);
             }
             QPushButton#stop_btn {
-                background: #8a3d4a;
-                border-color: #bd7180;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #8a3d4a, stop:0.5 #7a3340, stop:1 #682b36);
+                border-color: #c06070;
             }
             QPushButton#stop_btn:hover {
-                background: #a54959;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #a54959, stop:0.5 #943f4e, stop:1 #7e3542);
+                border-color: #e08090;
             }
             QPushButton#secondary_btn {
-                background: #263847;
-                border-color: #5f7f92;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #243a4e, stop:0.5 #1e3244, stop:1 #182a3a);
+                border-color: #50738a;
             }
             QPushButton#secondary_btn:hover {
-                background: #31485a;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #2e485e, stop:0.5 #284054, stop:1 #22384a);
+                border-color: #7098b2;
             }
+
+            /* ========== 输入控件 ========== */
             QLineEdit, QComboBox, QDoubleSpinBox {
-                background: #07131f;
-                border: 1px solid #345f76;
-                border-radius: 6px;
-                color: #eaf6ff;
-                min-height: 28px;
-                padding: 3px 8px;
-                selection-background-color: #23708f;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #06111d, stop:1 #091826);
+                border: 1px solid #2d5872;
+                border-radius: 7px;
+                color: #e6f2ff;
+                min-height: 30px;
+                padding: 4px 10px;
+                selection-background-color: #1e7a9a;
+            }
+            QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus {
+                border-color: #5db8d8;
             }
             QComboBox::drop-down {
                 border: none;
-                width: 24px;
+                width: 26px;
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+            }
+            QComboBox::down-arrow {
+                width: 10px;
+                height: 10px;
             }
             QComboBox QAbstractItemView {
-                background: #0b1724;
-                border: 1px solid #345f76;
-                color: #eaf6ff;
-                selection-background-color: #23708f;
+                background: #091826;
+                border: 1px solid #2d5872;
+                border-radius: 6px;
+                color: #e6f2ff;
+                selection-background-color: #1e7a9a;
+                outline: none;
             }
+
+            /* ========== 复选框 ========== */
             QCheckBox {
-                color: #dbeafe;
-                spacing: 8px;
+                color: #cde4f8;
+                spacing: 10px;
+                font-size: 13px;
             }
             QCheckBox::indicator {
-                width: 16px;
-                height: 16px;
-                border: 1px solid #5f8da3;
-                border-radius: 4px;
-                background: #07131f;
+                width: 18px;
+                height: 18px;
+                border: 2px solid #4d809a;
+                border-radius: 5px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #07131f, stop:1 #0b1d2e);
             }
             QCheckBox::indicator:checked {
-                background: #2a90af;
-                border: 1px solid #87d9ee;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #2598b8, stop:1 #1c7e9a);
+                border-color: #7ad4ee;
             }
+
+            /* ========== 表格 ========== */
             QTableWidget {
                 background: #07131f;
-                border: 1px solid #345f76;
-                border-radius: 7px;
-                gridline-color: #233a4d;
-                color: #e6f3ff;
-                selection-background-color: #245d74;
-                alternate-background-color: #0c1b29;
+                border: 1px solid #2d5872;
+                border-radius: 8px;
+                gridline-color: #1e3448;
+                color: #e0f0ff;
+                selection-background-color: #1e6a85;
+                alternate-background-color: #0a1a2a;
             }
             QTableWidget::item {
-                padding: 6px;
-                border-bottom: 1px solid #162b3c;
+                padding: 7px;
+                border-bottom: 1px solid #14283a;
             }
             QHeaderView::section {
-                background: #163247;
-                padding: 7px;
-                border: 1px solid #345f76;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 #15364c, stop:1 #0f2a3c);
+                padding: 8px;
+                border: 1px solid #2d5872;
                 font-weight: 700;
-                color: #dff5ff;
+                color: #d8f0ff;
             }
+
+            /* ========== 滚动条 ========== */
             QScrollBar:vertical, QScrollBar:horizontal {
-                background: #0b1724;
+                background: #081420;
                 border-radius: 5px;
             }
             QScrollBar:vertical {
@@ -398,12 +460,35 @@ class MainWindow(QMainWindow):
                 height: 10px;
             }
             QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-                background: #315d73;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #2a5a70, stop:1 #356d85);
                 border-radius: 5px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #357090, stop:1 #4088a2);
             }
             QScrollBar::add-line, QScrollBar::sub-line {
                 width: 0px;
                 height: 0px;
+            }
+            QScrollArea#side_scroll {
+                background: transparent;
+                border: none;
+            }
+            QWidget#side_content {
+                background: transparent;
+            }
+
+            /* ========== 提示文本 ========== */
+            QToolTip {
+                background: #0d2136;
+                color: #e0f0ff;
+                border: 1px solid #3d708a;
+                border-radius: 6px;
+                padding: 5px 10px;
+                font-size: 12px;
             }
         """)
 
@@ -430,6 +515,21 @@ class MainWindow(QMainWindow):
 
         top_header_layout.addWidget(title_label)
         top_header_layout.addWidget(subtitle_label)
+
+        # 装饰性科技分割线
+        accent_line = QFrame()
+        accent_line.setFixedHeight(2)
+        accent_line.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 transparent, stop:0.2 #1a6a88,
+                                            stop:0.5 #3db8dc, stop:0.8 #1a6a88,
+                                            stop:1 transparent);
+                border: none;
+                border-radius: 1px;
+            }
+        """)
+        top_header_layout.addWidget(accent_line)
         root_layout.addWidget(top_header)
 
         main_card = QFrame()
@@ -448,21 +548,39 @@ class MainWindow(QMainWindow):
         self.original_label = QLabel("原始图像")
         self.original_label.setObjectName("image_panel")
         self.original_label.setAlignment(Qt.AlignCenter)
-        self.original_label.setMinimumSize(460, 300)
+        self.original_label.setMinimumSize(320, 240)
+        self.original_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         left_layout.addWidget(self.original_label, 1)
 
         self.result_label = QLabel("检测结果")
         self.result_label.setObjectName("image_panel")
         self.result_label.setAlignment(Qt.AlignCenter)
-        self.result_label.setMinimumSize(460, 300)
+        self.result_label.setMinimumSize(320, 240)
+        self.result_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         left_layout.addWidget(self.result_label, 1)
 
         right_widget = QFrame()
         right_widget.setObjectName("panel_card")
-        right_widget.setMaximumWidth(450)
-        right_layout = QVBoxLayout(right_widget)
+        right_widget.setMinimumWidth(330)
+        right_widget.setMaximumWidth(520)
+        right_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        right_shell_layout = QVBoxLayout(right_widget)
+        right_shell_layout.setContentsMargins(4, 8, 4, 8)
+
+        side_scroll = QScrollArea()
+        side_scroll.setObjectName("side_scroll")
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setFrameShape(QFrame.NoFrame)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        side_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        side_content = QWidget()
+        side_content.setObjectName("side_content")
+        right_layout = QVBoxLayout(side_content)
         right_layout.setSpacing(10)
-        right_layout.setContentsMargins(12, 12, 12, 12)
+        right_layout.setContentsMargins(8, 6, 8, 6)
+        side_scroll.setWidget(side_content)
+        right_shell_layout.addWidget(side_scroll)
 
         model_group = QGroupBox("模型选择")
         model_layout = QGridLayout(model_group)
@@ -523,42 +641,52 @@ class MainWindow(QMainWindow):
         right_layout.addWidget(save_group)
 
         btn_group = QGroupBox("检测操作")
-        btn_layout = QVBoxLayout(btn_group)
+        btn_layout = QGridLayout(btn_group)
         btn_layout.setContentsMargins(10, 14, 10, 10)
-        btn_layout.setSpacing(10)
+        btn_layout.setHorizontalSpacing(8)
+        btn_layout.setVerticalSpacing(8)
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
 
         self.img_btn = QPushButton("图片检测")
         self.img_btn.clicked.connect(self.detect_image)
-        btn_layout.addWidget(self.img_btn)
+        btn_layout.addWidget(self.img_btn, 0, 0)
 
         self.video_btn = QPushButton("视频检测")
         self.video_btn.clicked.connect(self.detect_video)
-        btn_layout.addWidget(self.video_btn)
+        btn_layout.addWidget(self.video_btn, 0, 1)
 
         self.camera_btn = QPushButton("摄像头检测")
         self.camera_btn.clicked.connect(self.detect_camera)
-        btn_layout.addWidget(self.camera_btn)
+        btn_layout.addWidget(self.camera_btn, 1, 0)
 
         self.stop_btn = QPushButton("停止检测")
         self.stop_btn.setObjectName("stop_btn")
         self.stop_btn.clicked.connect(self.stop_detection)
-        btn_layout.addWidget(self.stop_btn)
+        btn_layout.addWidget(self.stop_btn, 1, 1)
 
         self.save_btn = QPushButton("保存当前结果图")
         self.save_btn.clicked.connect(self.save_result)
-        btn_layout.addWidget(self.save_btn)
+        btn_layout.addWidget(self.save_btn, 2, 0, 1, 2)
 
-        for btn in [
+        self.action_buttons = [
             self.img_btn,
             self.video_btn,
             self.camera_btn,
             self.stop_btn,
             self.save_btn,
+        ]
+        for btn in self.action_buttons:
+            btn.setMinimumHeight(36)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        for btn in [
             self.browse_model_btn,
             self.reload_model_btn,
             self.browse_video_save_btn,
         ]:
-            btn.setFixedHeight(34)
+            btn.setMinimumHeight(34)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         right_layout.addWidget(btn_group)
 
@@ -569,8 +697,9 @@ class MainWindow(QMainWindow):
         self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.result_table.setAlternatingRowColors(True)
         self.result_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.result_table.setMinimumHeight(150)
         table_layout.addWidget(self.result_table)
-        right_layout.addWidget(table_group, 1)
+        right_layout.addWidget(table_group)
 
         self.status_label = QLabel("状态: 就绪")
         self.status_label.setObjectName("status_label")
@@ -600,13 +729,31 @@ class MainWindow(QMainWindow):
         ]:
             widget.setFont(right_font)
 
+        self.right_widget = right_widget
+        self.side_scroll = side_scroll
+        self.btn_layout = btn_layout
+
         main_layout.addWidget(left_widget, 2)
         main_layout.addWidget(right_widget, 1)
 
-        self._add_shadow(main_card, blur=36, offset_y=3, color=(0, 0, 0, 135))
-        self._add_shadow(top_header, blur=28, offset_y=2, color=(18, 111, 145, 110))
-        self._add_shadow(left_widget, blur=28, offset_y=2, color=(0, 0, 0, 120))
-        self._add_shadow(right_widget, blur=28, offset_y=2, color=(0, 0, 0, 120))
+        self._add_shadow(main_card, blur=40, offset_y=3, color=(0, 0, 0, 140))
+        self._add_shadow(top_header, blur=30, offset_y=2, color=(20, 130, 170, 100))
+        self._add_shadow(left_widget, blur=30, offset_y=2, color=(0, 30, 50, 110))
+        self._add_shadow(right_widget, blur=30, offset_y=2, color=(0, 30, 50, 110))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if not hasattr(self, "action_buttons"):
+            return
+
+        compact = self.height() < 820
+        button_height = 34 if compact else 40
+        spacing = 6 if compact else 8
+        self.btn_layout.setHorizontalSpacing(spacing)
+        self.btn_layout.setVerticalSpacing(spacing)
+        for button in self.action_buttons:
+            button.setMinimumHeight(button_height)
+            button.setMaximumHeight(button_height)
 
     def create_double_spin(self, minimum, maximum, value, step):
         spin = QDoubleSpinBox()
